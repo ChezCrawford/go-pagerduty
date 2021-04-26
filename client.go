@@ -280,6 +280,13 @@ func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
 	return c.do(ctx, http.MethodGet, path, nil, nil)
 }
 
+func (c *Client) getEarlyAccess(ctx context.Context, path string, earlyAccessName string) (*http.Response, error) {
+	var headers = map[string]string{
+		"X-Early-Access": earlyAccessName,
+	}
+	return c.do(ctx, http.MethodGet, path, nil, headers)
+}
+
 // needed where pagerduty use a different endpoint for certain actions (eg: v2 events)
 func (c *Client) doWithEndpoint(ctx context.Context, endpoint, method, path string, authRequired bool, body io.Reader, headers map[string]string) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, endpoint+path, body)

@@ -101,8 +101,12 @@ func loadCommands() map[string]cli.CommandFactory {
 		"user notification-rule show":   UserNotificationRuleShowCommand,
 		"user notification-rule update": UserNotificationRuleUpdateCommand,
 
-		"vendor list":             VendorListCommand,
-		"vendor show":             VendorShowCommand,
+		"vendor list": VendorListCommand,
+		"vendor show": VendorShowCommand,
+
+		"webhook-subscription list": WebhookSubscriptionListCommand,
+		"webhook-subscription show": WebhookSubscriptionShowCommand,
+
 		"analytics incident show": AnalyticsGetAggregatedIncidentDataCommand,
 		"analytics service show":  AnalyticsGetAggregatedServiceDataCommand,
 		"analytics team show":     AnalyticsGetAggregatedTeamDataCommand,
