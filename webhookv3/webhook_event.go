@@ -13,6 +13,7 @@ type OutboundEventData struct {
 	Object map[string]interface{}
 	// The raw json data for use in structured unmarshalling.
 	RawData json.RawMessage
+	Type    string
 }
 
 // OutboundEvent represents the event that is delivered in a V3 Webhook Payload.
@@ -42,6 +43,13 @@ func (e *OutboundEventData) UnmarshalJSON(data []byte) error {
 	if err := e.RawData.UnmarshalJSON(data); err != nil {
 		return err
 	}
+
+	dataType, err := getDataValue(e.Object, []string{"type"})
+	if err != nil {
+		return err
+	}
+
+	e.Type = dataType
 
 	return nil
 }
