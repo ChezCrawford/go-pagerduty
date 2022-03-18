@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -51,18 +50,9 @@ func VerifySignature(r *http.Request, secret string) error {
 		return ErrMalformedHeader
 	}
 
-	orb := r.Body
-
-	b, err := ioutil.ReadAll(io.LimitReader(r.Body, webhookBodyReaderLimit))
+	b, err := repeatableReadBody(r)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	defer func() { _ = orb.Close() }()
-	r.Body = ioutil.NopCloser(bytes.NewReader(b))
-
-	if len(b) == 0 {
-		return ErrMalformedBody
+		return err
 	}
 
 	sigs := extractPayloadSignatures(h)
@@ -108,22 +98,28 @@ func calculateSignature(payload []byte, secret string) []byte {
 }
 
 func ReadWebhookPayload(r *http.Request) (*WebhookPayload, error) {
-	orb := r.Body
-
-	b, err := ioutil.ReadAll(io.LimitReader(r.Body, webhookBodyReaderLimit))
+	b, err := repeatableReadBody(r)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	defer func() { _ = orb.Close() }()
-	r.Body = ioutil.NopCloser(bytes.NewReader(b))
-
-	if len(b) == 0 {
-		return nil, ErrMalformedBody
+		return nil, err
 	}
 
 	var wp WebhookPayload
 	err = json.Unmarshal(b, &wp)
 
 	return &wp, err
+}
+
+func repeatableReadBody(r *http.Request) (body []byte, err error) {
+	body, err = io.ReadAll(io.LimitReader(r.Body, webhookBodyReaderLimit)) // Read
+	r.Body = io.NopCloser(bytes.NewReader(body))                           // Reset
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if len(body) == 0 {
+		return nil, ErrMalformedBody
+	}
+
+	return body, nil
 }
